@@ -13,7 +13,9 @@ Sample graph for the 1980s:
 Sample graph for the 1990s:  
 <img src="https://user-images.githubusercontent.com/56187121/147253893-22ce927e-dd26-4325-9f9b-c064f254dc1c.png" width = 560 height=400/>
 
-Sample graph for the 2000s:
-![unnamed-chunk-15-1](https://user-images.githubusercontent.com/56187121/147253894-2078379a-d126-4251-9ce0-fe2616dc3347.png)
-Sample graph for the 2010s:
-![unnamed-chunk-19-1](https://user-images.githubusercontent.com/56187121/147253897-29e8932a-ec6e-443e-95a3-8f37c27b5157.png)
+Sample graph for the 2000s:  
+<img src="https://user-images.githubusercontent.com/56187121/147253894-2078379a-d126-4251-9ce0-fe2616dc3347.png" width = 650 height=400/>
+
+Sample graph for the 2010s:  
+<img src="https://user-images.githubusercontent.com/56187121/147253897-29e8932a-ec6e-443e-95a3-8f37c27b5157.png" width = 560 height=400/>
+
