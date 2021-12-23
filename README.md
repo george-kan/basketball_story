@@ -8,7 +8,7 @@ Kaggle notebook in R describing the last four decades of the NBA by using a comb
 https://www.kaggle.com/noobiedatascientist/a-basketball-story/report?kernelSessionId=82944487
 
 Sample graph for the 1980s:
-<img src="https://user-images.githubusercontent.com/56187121/147253890-bdfcb274-ab9e-4dc6-bb0a-52f6af04e156.png" width = 350 height=250/>
+<img src="https://user-images.githubusercontent.com/56187121/147253890-bdfcb274-ab9e-4dc6-bb0a-52f6af04e156.png" width = 560 height=400/>
 
 Sample graph for the 1990s:
 ![unnamed-chunk-9-1](https://user-images.githubusercontent.com/56187121/147253893-22ce927e-dd26-4325-9f9b-c064f254dc1c.png)
