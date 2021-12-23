@@ -1,0 +1,758 @@
+---
+title: "A data history of the [NBA](https://en.wikipedia.org/wiki/National_Basketball_Association) 📈"
+output: 
+  html_document:
+    toc: false
+code_folding: "hide"
+theme: readable    
+---
+
+```{r include = F}
+install.packages("rcartocolor")
+library(data.table)
+library(ggplot2)
+library(showtext)
+library(scales)
+library(ggforce)
+library(ggrepel)
+install.packages("kableExtra")
+library(kableExtra)
+library(magrittr)
+
+theme_set(theme_minimal(base_size = 20) + 
+            theme(plot.title = element_text(face= "plain", hjust = 0.5, size = 20),
+                  axis.text = element_text(size=16),
+                  legend.text = element_text(size = 14),
+                  panel.grid.major.x = element_line(color = "grey90", size = .6)))
+
+adv_st = fread('../input/nba-aba-baa-stats/Advanced.csv')
+end_seas_teams = fread("../input/nba-aba-baa-stats/End of Season Teams.csv")
+opp_pg = fread('../input/nba-aba-baa-stats/Opponent Stats Per Game.csv')
+team_abr = fread("../input/nba-aba-baa-stats/Team Abbrev.csv")
+team_stats_pg = fread('../input/nba-aba-baa-stats/Team Stats Per Game.csv')
+team_sum = fread('../input/nba-aba-baa-stats/Team Summaries.csv')
+player_aw = fread('../input/nba-aba-baa-stats/Player Award Shares.csv')
+player_pg = fread('../input/nba-aba-baa-stats/Player Per Game.csv')
+player_cari = fread("../input/nba-aba-baa-stats/Player Career Info.csv")
+player_tot = fread("../input/nba-aba-baa-stats/Player Totals.csv")
+player_seas = fread("../input/nba-aba-baa-stats/Player Season Info.csv")
+player_shoot = fread("../input/nba-aba-baa-stats/Player Shooting.csv")
+team_rec = fread('../input/nba-season-records-from-every-year/Team_Records.csv')
+team_tot = fread('../input/nba-aba-baa-stats/Team Totals.csv')
+
+team_rec[, short_season := as.integer(paste0(substr(Season, 1,4))) + 1]
+team_rec[, short_team := gsub(".*\\s(.*)", "\\1", gsub("\\*", "", Team))]
+team_rec[Playoffs == "Won Finals", Champion := T]
+
+```
+
+
+<span style="color:green;font-weight:bold;font-size:30"> Welcome to another notebook! </span>  
+This is probably my favourite one as we are going to look at the history of the NBA through data.  
+For those of you that don't know much about the NBA, **great!!** We are going to discover its rich history together.  
+Let's begin! 
+
+<p style="font-size: 16px; font-weight: bold; letter-spacing: 2px; text-align: center; color: #FF8C00">Remember to leave an upvote if you enjoy this notebook!</p>
+<p style="text-align: center">😊😊😊</p>
+
+# Before the 1980s
+
+<figure> 
+     <img src='https://images.unsplash.com/photo-1502239608882-93b729c6af43?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80'>
+     <figcaption> Grey leaves by <a>https://unsplash.com/@bwobble11</a></figcaption>
+</figure>
+</br>
+  
+Ok I am going to be honest, I do not know much about those times sooo we are simply going to pretend they didn't happen 😅
+
+# <span>1980s: </span> <span style="color:green">A Bird</span> <span>told me it was </span> <span style="color:#E7A922">Magic! </span> 🖭
+
+<figure> 
+   <img src='https://images.unsplash.com/photo-1571330735066-03aaa9429d89?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'>
+   <figcaption> White cassette tape by <a>https://unsplash.com/@schluditsch</a></figcaption>
+</figure>
+</br>
+
+The decade is defined by the two mega-stars:  
+**Magic Johnson** who led the Lakers to 5 championships and **Larry Bird** who led the Celtics to 3.  
+Their rivarly was legendary and brought popularity to the NBA. 
+
+```{r echo = F}
+champions = c('Lakers', 'Celtics', 'Lakers', '76ers', 'Celtics', 'Lakers', 'Celtics', 'Lakers', 'Lakers', 'Pistons')
+champ_80s = data.table(team = champions, season = 1980:1989)
+
+ggplot(champ_80s, aes(y = reorder(team,team,
+                     function(x) length(x)), fill = ifelse(team %in% c('Celtics', 'Lakers'), team, 'other'))) +
+    geom_bar(width = 0.65) +
+    scale_fill_manual(values = c("Celtics" = muted("green"), "Lakers"= "#E7A922", "other"="grey"), guide='none') +
+    labs(title = "Championships in the 80s") +
+    theme(axis.title = element_blank(),
+         panel.grid = element_blank())
+```
+
+Between them, they dominate the league and are selected in either the first or the second All-NBA team almost every year of the decade. (The All-NBA teams are a selection of the best players in the season)
+
+```{r include = F}
+allnba_80s = end_seas_teams[between(season, 1980, 1989) & type == "All-NBA", .(fill = ifelse("Magic Johnson" %in% player & "Larry Bird" %in% player, "Both",
+                                                                          ifelse("Magic Johnson" %in% player, "Only Magic",
+                                                                                ifelse("Larry Bird" %in% player, "Only Bird", "Neither")))), by = season]
+allnba_80s[fill == "Both", num := 2]
+allnba_80s[fill != "Both", num := 1]
+```
+
+```{r echo=F}
+ggplot(allnba_80s, aes(x = factor(season), y = num, fill=fill, group = 1)) +
+    geom_line() +
+    #geom_emoji(aes(emoji = ifelse(fill=="Only Magic", "1f3a9", "1f426"))) +
+    geom_point(shape = 21, size = 5) +
+    #geom_point(shape = "\u2620") + 
+    scale_fill_manual(values = c("Both" = "blue", "Only Bird"="green", "Only Magic" = "#E7A922")) +
+    scale_y_continuous(limits = c(0.5,2), breaks = c(1,2)) +
+    labs(title = "All-NBA selections by Magic and Bird") +
+    theme(legend.position = "bottom",
+          panel.grid.minor = element_blank(),
+          panel.grid.major.y = element_blank(),
+          axis.text.y = element_blank(),
+         legend.title = element_blank(),
+         axis.title = element_blank())
+```
+
+
+
+
+
+## 1984: A star is born 🐐
+<figure> 
+   <img src="https://images.unsplash.com/photo-1620588212046-66bc57e70eeb?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=735&q=80" height="600" width="400">
+   <figcaption> Statue by <a>https://unsplash.com/@mkaine17</a></figcaption>
+</figure>
+</br>
+
+[The Chicago Bulls pick Michael Jordan of the University of North Carolina!! And the rest is history.](https://youtu.be/mjfp0b0Qm7c?t=1333)  
+Michael Jordan enters the league in 1984 and takes it by storm, let's have a look at how he did as a rookie:
+
+```{r echo = F, fig.width = 8, fig.height=6}
+per_game_84 = player_pg[season == 1985][, .(player, trb_per_game, ast_per_game, stl_per_game, blk_per_game, pts_per_game)]
+names(per_game_84) = c("player", "Rebounds", "Assists", "Steals", "Blocks", "Points")
+per_game_84[, mj := ifelse(player == "Michael Jordan", "mj", "not mj")]
+per_game_84_long = melt(per_game_84, id.vars = c("player", "mj"))
+per_game_84_long = per_game_84_long[value > 0]
+
+set.seed(1)
+ggplot(per_game_84_long, aes(y = variable, x = value, size = factor(mj), fill = mj, alpha = factor(mj))) +
+    geom_jitter(shape = 21) +
+    scale_size_manual(values = c("mj"=6, "not mj"=2), guide="none") + 
+    scale_alpha_manual(values = c("mj"=1, "not mj"=0.3), guide="none") + 
+    scale_fill_manual(values = c("mj"="red", "not mj" = "grey"), guide="none") +
+    scale_x_continuous(trans='log10') +
+    labs(title = "MJ's rookie season", x = "Value (logarithmic scale)") +
+    theme(axis.title.y = element_blank()) + 
+    annotate("text", x = 13, y = 4, size = 6, color = "gray20", lineheight = .9, label = "MJ scored 28.2 points\n per game") +
+    geom_curve(aes(x = 15, xend = 26, y = 4.4, yend = 5.1), size = 1, color = "gray20", curvature = -0.3, arrow = arrow(length = unit(0.07, "inch")))
+```
+
+
+As we can see he did not have any issues adjusting.  
+He averaged 28.2 points, 6.5 rebounds, 5.9 assists, 2.4 steals and 0.8 blocks and made the All-Rookie team and the second All-NBA team!  
+**Simply amazing!**
+
+## 1986: [Piston Bad Boys](https://youtu.be/Zd68AthoNIw?t=25)
+
+The Detroit Pistons under head coach Chuck Daly adopted a very physical and defense oriented style of play (⚠️ there were no flagrant fouls at that time in the NBA, so giving an attacker a little extra something something every time he was going towards the basket was a good idea!) that earned them the nickname "Bad Boys".  
+The team was led by Isiah Thomas, one of the best point guards to ever play the game, despite being only 6ft1 (185 cm).  
+
+They made the conference finals in 1987 but were [stopped by the Celtics](https://youtu.be/VNpJXDPnQTE?t=14).    
+That misfortune fueled them even more and they reached the finals in 1988 only to be defeated by the Lakers.  
+But it was all forgotten when the Pistons finally won the 🏆 in 1989 and did the repeat in 1990. 
+
+```{r echo = F}
+op_pts_pg = opp_pg[between(season, 1986, 1990), .(season, team, opp_pts_per_game)]
+op_pts_pg[, pist_flag := ifelse(team == "Detroit Pistons", "bb", "not bb")]
+
+ggplot(op_pts_pg, aes(x = season, y = opp_pts_per_game, fill = pist_flag, alpha = factor(pist_flag))) +
+  geom_point(
+    shape = 21,
+    position = position_jitter(width = .2, seed = 0),
+    size = 7, stroke = .9, color = "black"
+  ) +
+  scale_fill_manual(values = c("bb" = "red", "not bb"="grey"), guide = "none") + 
+  scale_alpha_manual(values = c("bb" = 1, "not bb"= 0.2), guide = "none") +
+  labs(title = "Opponent points allowed by the Bad Boys") + 
+  theme(axis.title = element_blank()) 
+```
+
+The data speak for themselves, Detroit had a really stingy defense at the end of the 1980s.  
+One of their most famous defensive schemes were the [Jordan rules](https://www.youtube.com/watch?v=4GYKrcM1k0U&ab_channel=EndlessMedia%2CLLC.), a set of defensive guidelines in order to contain Michael Jordan. And they worked! 
+The Pistons eliminated the Bulls for 3 straight seasons, from 1988 to 1990, but it was all about to change. 
+
+# <span>1990s:</span>  <span style="color:red">A Bull market</span> 🐂
+
+
+<figure> 
+   <img src="https://images.unsplash.com/photo-1591546947548-b81da5bb7d6c?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80">
+   <figcaption> Greyscale bull by <a>https://unsplash.com/@jaredschwitzke</a></figcaption>
+</figure>
+</br>
+  
+The Chicago Bulls continuously improved since acquiring Jordan in 1984 but could not get over the Pistons. That would all change in the 1991 season, under second year coach Phil Jackson.  
+MJ learns to trust his teammates (a bit more), everything clicks and we have lift-off 🚀.  
+The Bulls will win 6/10 championships in that decade, with 2 three-peats! Talk about dominance...
+
+```{r echo = F}
+champ_90s = team_rec[Playoffs == "Won Finals" & between(short_season, 1990, 1999), .(team = short_team)]
+
+ggplot(champ_90s, aes(y = reorder(team,team, function(x) length(x)), fill = ifelse(team == "Bulls", "bulls", "other"))) +
+    geom_bar(width = 0.65) +
+    scale_fill_manual(values = c("bulls" = "darkred", "other"= "grey"), guide="none") +
+    labs(title = "Championships in the 90s") +
+    theme(axis.title = element_blank(),
+         panel.grid = element_blank())
+```
+
+
+```{r echo = F}
+bulls_evo = team_rec[short_team == "Bulls" & between(short_season, 1985, 1998), .(season = short_season, W, L, Finish, Playoffs)]
+bulls_evo[, Playoffs := gsub("Lost E. ", "", Playoffs)]
+bulls_evo[, Playoffs := gsub("Won Finals", "Champions", Playoffs)]
+bulls_evo[Playoffs == "Champions", outcome := "champ"]
+bulls_evo[Playoffs != "Champions", outcome := "not champ"]
+
+ggplot(bulls_evo, aes(x = season, y = W)) +
+    geom_line(linetype = "longdash", color = "grey") +
+    geom_point(aes(color = factor(outcome), shape = outcome, size = outcome, fill = factor(Playoffs))) +
+    scale_y_continuous(expand = expansion(add = 5)) +
+    scale_x_continuous(breaks = seq(1985, 1998, 2)) +
+    scale_color_manual(values = c("champ" = "red", "not_champ" = "grey"), guide = "none") +
+    scale_fill_manual(values = c('Conf. 1st Rnd.' = '#FEE5D9', 'Conf. Semis' = '#FB6A4A','Conf. Finals' = '#CB181D')) +
+    scale_shape_manual(values = c("champ" = 8, "not champ" = 21), guide = "none") + 
+    scale_size_manual(values = c("champ" = 10, "not champ" = 4), guide = "none") + 
+    labs(fill = "Season conclusion", y = "Reg. season wins", title = "The Bulls improve every year") +
+    theme(legend.position = "bottom",
+         axis.title.x = element_blank(),
+         legend.text=element_text(size = 14)) + 
+    guides(fill = guide_legend(title.position="top", title.hjust = 0.5, override.aes=list(shape=21, size = 5)))
+
+```
+
+The increase in the regular season wins as well as the playoff progression for the Bulls is very obvious from the graph. But there is a dip around 1994-1995...
+
+## 1992: The Dream Team
+
+<figure> 
+   <img src="https://images.unsplash.com/photo-1569517282132-25d22f4573e6?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1566&q=80">
+   <figcaption> Sports signage by <a>https://unsplash.com/@bt_optics</a></figcaption>
+</figure>
+</br>
+  
+The 1992 Olympics took place in Barcelona and for the first time in history NBA players could take part in the games. (Before that point only amateurs and college players could play).  
+The NBA players took full advantage of the rule change and put together one of (or simply the) the greatest teams ever assembled. Here are the participants:  
+**Christian Laettner**    
+**David Robinson**    
+**Patrick	Ewing**    
+**Larry Bird**    
+**Scottie	Pippen**    
+**Michael	Jordan**    
+**Clyde Drexler**    
+**Karl Malone**    
+**John Stockton**    
+**Chris Mullin**     
+**Charles	Barkley**    
+**Magic Johnson**  
+
+Just to grasp how good this team was, just have a look at the awards the players had between them:
+
+```{r echo = F}
+dream_players = c("Christian Laettner", "David Robinson", "Patrick Ewing", "Larry Bird", "Scottie Pippen", "Michael Jordan", "Clyde Drexler", "Karl Malone", 
+                  "John Stockton", "Chris Mullin", "Charles Barkley", "Magic Johnson")
+dream_aw = player_aw[player %in% dream_players & winner == T]
+dream_aw[award == "dpoy", award := "Defensive player of the year"]
+dream_aw[award == "nba mvp", award := "NBA MVP"]
+dream_aw[award == "nba roy", award := "Rookie of the year"]
+dream_aw[, award := factor(award, levels = c("Rookie of the year", "Defensive player of the year", "NBA MVP"))]
+
+
+ggplot(dream_aw, aes(x = reorder(player,player, function(x) length(x)), fill = award)) +
+    geom_bar(width = 0.65) +
+    coord_flip() +
+    scale_fill_manual(values = c("Rookie of the year" = "#CD7F32", "Defensive player of the year" = "#C0C0C0", "NBA MVP"="#FFD700")) + labs(title = "A team of stars") +
+    theme(axis.title = element_blank(),
+         legend.position = c(.7,.25),
+         legend.title = element_blank()) +
+    guides(fill = guide_legend(reverse = TRUE, nrow=3))
+
+```
+
+And as you can imagine the Dream Team proved its worth and crushed all opposition. The closest game they played was their 117-85 victory over Croatia.  
+In an era where the internet was not yet a thing, this was a great opportunity for the whole world to marvel at the NBA stars.
+
+
+## 1993: Time for some baseball ⚾
+
+At the end of the 1993 season, after winning the third straight 🏆 and while at the peak of his powers Jordan <span style="text-decoration: line-through;"> was suspended </span> retired from basketball!  
+Let's see who filled the huge vacuum left behind.
+
+
+### Hakeem the Dream
+
+Hakeem Olajuwon was selected 1st in the same draft year as Michael Jordan. A seven footer with amazing footwork and elegance around the basket (most notably the [Dream Shake](https://www.youtube.com/watch?v=9J-WJ5739Tg&ab_channel=NBA)), he took the Rockets by the hand and led them to 2 straight NBA championships. 
+
+Let's see his stats during that two year span:
+
+```{r echo=F, warning=F, fig.width = 8, fig.height=6}
+per_game_9495 = player_pg[season %in% c(1994, 1995)][, .(season, player, trb_per_game, ast_per_game, stl_per_game, blk_per_game, pts_per_game)]
+names(per_game_9495) = c("season", "player", "Rebounds", "Assists", "Steals", "Blocks", "Points")
+per_game_9495[, hak := ifelse(player != "Hakeem Olajuwon", "not hak", 
+                              ifelse(season == 1994, "hak 1994", "hak 1995"))][, season := NULL]
+per_game_9495_long = melt(per_game_9495, id.vars = c("player", "hak"))
+per_game_9495_long = per_game_9495_long[value > 0]
+
+per_game_9495_long = per_game_9495_long[hak == "hak 1994" & variable == "Blocks", labels := "Hakeem 1994"]
+per_game_9495_long = per_game_9495_long[hak == "hak 1995" & variable == "Blocks", labels := "Hakeem 1995"]
+
+set.seed(42)
+ggplot(per_game_9495_long, aes(y = variable, x = value, size = factor(hak), fill = hak, alpha = factor(hak))) +
+    geom_jitter(shape = 21, height = 0.2, width = 0.02) +
+    geom_text_repel(aes(label = labels, color = hak)) +
+    scale_size_manual(values = c("hak 1994"=4, "hak 1995"=4, "not hak"=2), guide="none") + 
+    scale_alpha_manual(values = c("hak 1994"=1, "hak 1995"=1, "not hak"=0.2), guide="none") + 
+    scale_fill_manual(values = c("hak 1994"="blue", "hak 1995"="green", "not hak" = "grey"), guide="none") +
+    scale_color_manual(values = c("hak 1994"="blue", "hak 1995"="darkgreen", "not hak" = "grey"), guide="none") +
+    scale_x_continuous(trans='log10') +
+    labs(title = "Hakeem was dominant in 1994&5") +
+    theme(axis.title = element_blank())
+    
+```
+
+But you know what is even more impressive? That his numbers were even better in the playoffs!! 
+
+This was his statline in the two championship runs:
+                                 
+```{r fig.width = 4, echo=F}                 
+hak_playoff = data.frame(`1994` = c(28.9, 4, 1.7, 4.3, 11), `1995` = c(33, 2.8, 1.2, 4.5, 10.3), check.names = F)
+rownames(hak_playoff) = c("Points", "Blocks", "Steals", "Assists", "Rebounds")
+hak_playoff%>%
+  kable("html") %>%
+  kable_styling(font_size = 20)
+                                 
+```
+
+## 1995: I am back
+
+On March 18 1995, the NBA rejoiced to hear these three very simple words: "I am back".  
+Michael Jordan returned to basketball and the Bulls, in order to take them once again to the promised land. Unfortunately, he could not get match fit so quickly and the Bulls got eliminated in the conference semi finals by the Orlando Magic, a team of two promising young stars, Penny Hardaway and Shaquille O'Neal.  
+
+
+## 1996-1998: Second three-peat and retirement
+
+As you can imagine, playoff elimination in 1995 motivated MJ to try even harder and the next year the Bulls came back with a vengeance: They recorded 72 wins in the regular season (a record that stood for almost 20 years until the 2015-16 Warriors broke it) and beat the SuperSonics 4-2 in the finals to reclaim the crown. The next two years they recorded 69 and 62 wins respectively and clinched the championship both times. 
+
+```{r echo=F, fig.width = 10, fig.height = 9}
+three_year_wins = team_rec[Lg == "NBA"][order(short_team, short_season)][, .(season = short_season, short_team, W, Champion)]
+three_year_wins[, three_y_sum := frollsum(W, n=3), by = short_team]
+three_year_wins[, championships := frollsum(Champion, n=3, na.rm = T), by = short_team]
+
+three_year_wins[, seasons := paste(season, substr(shift(season, 1), 3, 4), substr(shift(season, 2), 3, 4), sep="-")]
+top_three_year = head(three_year_wins[order(-three_y_sum)], 9)
+#Adding manual entry for the 2018 Warriors
+
+top_three_year = rbind(top_three_year,
+data.table(season = 2018, short_team = "Golden State Warriors", W = 58, Champion = T, three_y_sum = 198, championships = 2, seasons = "2018-17-16"))
+
+top_three_year[, team_abbr := gsub(".*\\s(.*)$", "\\1", short_team)]
+top_three_year[, team_year := paste(team_abbr, paste0("(", season, ")"))]
+
+
+ggplot(top_three_year, aes(y = reorder(team_year, three_y_sum), x= three_y_sum, fill = factor(championships))) +
+  geom_col() +
+  scale_x_continuous(expand = expansion(add = 0)) +
+  scale_fill_manual(values = c("1"= "#CD7F32", "2"="#C0C0C0", "3"= "#FFD700")) +
+  labs(fill = "Championships", x = "3-year window wins", title = "Teams with the most wins in a 3-year window") +
+  theme(legend.position = "bottom",
+        axis.title.y =  element_blank(),
+        axis.title.x = element_text(size=16)) +
+  guides(fill = guide_legend(title.position="top", title.hjust = 0.5))
+
+
+```
+
+The Bulls of the three year period (1996-7-8) recorded 203 wins. They have been surpassed by the 2017 Golden State Warriors, but I do think that 3 times champion has a different ring to it!  
+After winning the 1998 championship against the Jazz, Michael Jordan retired with this as [his last shot](https://www.youtube.com/watch?v=siXP1DNLeOo&ab_channel=pennyccw). (We are not going to talk about his Wizards career in this notebook 😄)
+
+# 2000s: <span style="color:#E7A922">Western </span> <span style="color:black">Dominance</span> 
+ 
+<figure> 
+     <img src='https://images.unsplash.com/photo-1516593412549-5b3f86dea7fc?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'>
+     <figcaption> Two grey spurs by <a>https://unsplash.com/@scottiewarman</a></figcaption>
+</figure>
+</br> 
+ 
+After Michael Jordan retired, the league was ready for some new superstars to take over. And they would deliver: 
+The duo of Kobe Bryant and Shaquille O'Neal in the Lakers dominated the first half of the 2000s, while in Texas the San Antonio Spurs coach Gregg Popovich created a wonderful team centered around Tim Duncan that would go on to dominate the league for the next 15 years.
+
+```{r echo=F}
+champ_00s = team_rec[Champion == T & between(short_season, 2000, 2009), .(team = short_team)]
+champ_00s[, fill := ifelse(team %in% c("Spurs", "Lakers"), team, "Other")]
+
+ggplot(champ_00s, aes(y = reorder(team,team, function(x) length(x)), fill = fill)) +
+    geom_bar(width = 0.65) +
+    scale_x_continuous(expand = expansion(add = 0)) +
+    scale_fill_manual(guide="none", values = c("Spurs"="black", "Lakers"="#E7A922", "Other" = "grey")) +
+    labs(title = "Championships in the 2000s") +
+    theme(axis.title = element_blank(),
+         panel.grid = element_blank())
+```
+
+The 2000s also claim the title as the slowest NBA era based on pace since the 1980s. The pace of the NBA had been steadily decreasing ever since the 1980s but it all became painfully visible in the 2000s. Big men (Shaq and Duncan) dominate the game and the low post is all the rage.
+Let's have a look:
+
+```{r echo = F}
+pace_dt = team_sum[season >= 1980 & team == "League Average", .(season, pace)]
+pace_dt[between(season, 2000, 2009), fill := "2000s"]
+pace_dt[!between(season, 2000, 2009), fill := "Not 2000s"]
+
+ggplot(pace_dt, aes(x = season, y = pace)) +
+  geom_line(size = 1.5) +
+  geom_mark_rect(aes(fill = fill, label = fill, filter = fill == "2000s"), alpha=0, show.legend = F, color = "green") +
+  labs(title = "The 2000s are really slow", y = "Pace") +
+  theme(axis.title.x = element_blank())
+
+
+```
+
+## 2003: Best draft class ever? 👑
+
+In the summer of 2003 the NBA was eagerly waiting for the new generational superstar in LeBron James!  
+But the top 5 picks of that draft were phenomenally successful in the NBA:
+
+**1. LeBron James**    
+**2. Darko Miličić (ok he wasn't)**    
+**3. Carmelo Anthony**    
+**4. Chris Bosh**    
+**5. Dwyane Wade**    
+
+Except for Darko, all the others went on to win multiple NBA championships, All-Star and All-NBA selections. 
+
+## 2005: The Suns ☀️- a team ahead of its time
+
+In an era of grinding, a team decides to zag. The Phoenix Suns led by offensive mastermind coach Mike D'Antoni and genious point guard Steve Nash decide to increase the pace and try to get a shot as fast as possible: The Seven Seconds or Less Phoenix Suns are born.  
+
+```{r fig.width = 12, fig.height = 6, echo = F}
+pace_ortg = team_sum[between(season, 2004, 2009) & team != "League Average", .(season, team, pace, o_rtg)]
+pace_ortg[, suns := ifelse(team == "Phoenix Suns", "suns", "not suns")][, team := NULL]
+
+pace_ortg_long = melt(pace_ortg, id.vars = c("season", "suns"))
+pace_ortg_long[, variable := ifelse(variable == "pace", "Pace", "Offensive rating")]
+
+ggplot(pace_ortg_long, aes(y = season, x = value, fill = suns, size = suns, alpha= suns)) +
+  geom_jitter(shape = 21, width = 0, height = 0.1) +
+  facet_wrap(variable ~ ., scales = "free_x") +
+  scale_size_manual(values = c("suns" = 5, "not suns" = 2)) +
+  scale_fill_manual(values = c("suns" = "orange", "not suns" = "grey")) +
+  scale_alpha_manual(values = c("suns" = 1, "not suns" = 0.4)) +
+  labs(title = "The Suns are fast") + 
+  theme(legend.position = "none", 
+        axis.title = element_blank(),
+        axis.text = element_text(size = 22),
+        strip.text = element_text(size = 20),
+        plot.title = element_text(face= "plain", size = 24, hjust = 0.5))
+
+```
+
+The Suns become a high octane offensive juggernaut and Nash wins the MVP in consecutive years in 2005 and 2006.  
+The change is also reflected in their regular and plaoff success:
+
+
+
+```{r echo=F}
+suns_evo = team_rec[short_team == "Suns" & between(short_season, 2004, 2009), .(season = short_season, W, L, Finish, Playoffs)]
+suns_evo[, Playoffs := gsub("Lost W. ", "", Playoffs)]
+suns_evo[Playoffs == "", Playoffs := "Missed playoffs"]
+
+ggplot(suns_evo, aes(x = season, y = W)) +
+    geom_line(linetype = "longdash", color = "grey") +
+    geom_point(aes(fill = factor(Playoffs)), shape = 21, size = 6) +
+    #scale_x_continuous(breaks = seq(1985, 1998, 2)) +
+    scale_fill_manual(values = c('Missed playoffs'="grey", 'Conf. 1st Rnd.' = '#FEE5D9', 'Conf. Semis' = '#FB6A4A','Conf. Finals' = '#CB181D')) +
+    #scale_size_manual(values = c("champ" = 10, "not champ" = 4), guide = "none") + 
+    labs(fill = "Season conclusion", y = "Reg. season wins", title = "The Suns become better but not best") +
+    theme(legend.position = "bottom",
+         axis.title.x = element_blank(),
+         legend.text=element_text(size = 13)) + 
+    guides(fill = guide_legend(title.position="top", title.hjust = 0.5, nrow = 1))
+
+
+
+```
+
+Unfortunately, despite their success the Suns never managed to get over the finish line and grab the trophy.   
+[In an interview with Bill Simmons](https://www.youtube.com/watch?v=WeQpbae_wcs&ab_channel=TheRinger), Nash thought that the mistakes of the Suns were:  
+1. Not doubling down on their strategy of fast pace  
+2. He didn't shoot enough 3s  
+
+## 2009-10: The Black Mamba surpasses Shaq 🐍
+
+After winning three straight championships at the beginning of 2000s, Kobe and Shaq could no longer stay on the same team as both wanted to be the "alpha". Shaq left to go to Miami where he won one more championship and Kobe stayed with the Lakers.  
+His tenure without Shaq was kinda miserable as he did not have particularly skilled teammates and LA was constantly in mediocrity. All that changed in February 2008 when the Lakers acquired Pau Gasol from the Grizzlies.  
+The duo led the Lakers to two straight championships at the end of the 2000s and the beginning of the 2010s, which brought the total championships for Kobe to 5, one more than Shaq's! 
+
+```{r echo = F, warning = F}
+per_stats = adv_st[between(season, 2005, 2010), .(season, player, per)]
+kobe_lakers = per_stats[, ecdf(per)(per[player == "Kobe Bryant"]), by = season]
+kobe_lakers[team_sum[abbreviation == "LAL", .(season, w)], on = "season", w := i.w]
+kobe_lakers[, Percentile := round(V1*100, 1)]
+kobe_lakers[, period := ifelse(season < 2008, "bad", "good")]
+kobe_lakers[season > 2007, c("V1", "Percentile") := NA]
+
+ggplot(kobe_lakers, aes(x = season)) +
+  geom_line(aes(y = w), color = "grey20", linetype = "dashed") +
+  geom_point(aes(y = w)) +
+  geom_text_repel(aes(label = paste(w, ifelse(w %in% c(34, 65), "Wins", "")), y = w), size = 5) +
+  geom_point(aes(y = V1*80)) +
+  geom_text_repel(aes(label = paste(Percentile, ifelse(Percentile == 99.5, "Kobe's PER\n percentile", "")), y = V1*80), size = 5) +
+  geom_segment(aes(xend = season, y = w, yend = V1*80, color = period), linetype = "longdash") +
+  geom_vline(aes(xintercept = 2007.5), color = muted("green"), size = 1.5) +
+  #geom_mark_rect(aes(fill = period, filter = period == "bad", y = w), alpha=0, show.legend = F, color = "red") +
+  scale_x_continuous(expand = expansion(add = 0.1)) +
+  scale_y_continuous(limits = c(0,82),
+                     sec.axis = sec_axis(~ . / 80*100, name = "Kobe's PER percentile")) +
+  labs(title = "The two sides of the Lakers at the end of the 2000s") +
+  theme(legend.position = "none",
+        panel.grid.minor = element_blank(),
+        axis.line = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title = element_blank()) +
+  annotate("text", x = 2006, y = 20, label = "Lakers struggle despite\n Kobe being extremely efficient") +
+  geom_curve(aes(x = 2006, xend = 2006, y = 24, yend = 42), size = 1, color = "gray20", curvature = -0.1, arrow = arrow(length = unit(0.07, "inch"))) +
+  annotate("text", x = 2009, y = 20, label = "Pau joins and the Lakers surge", size = 5) +
+  geom_curve(aes(x = 2009, xend = 2009, y = 22, yend = 60), size = 1, color = "gray20", curvature = -0.1, arrow = arrow(length = unit(0.07, "inch"))) +
+  geom_curve(aes(x = 2008.2, xend = 2007.65, y = 18, yend = 18), size = 1, color = muted("green"), curvature = -0.2, arrow = arrow(length = unit(0.07, "inch")))
+  
+  
+
+```
+
+# 2010s: 👑 LeBron, Warriors and analytics
+
+<figure> 
+     <img src='https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'>
+     <figcaption> Graphs of performance analytics by <a>https://unsplash.com/@lukechesser</a></figcaption>
+</figure>
+</br>
+
+The 2010s are undoubtedly the decade of LeBron James. Simply having him on your team essentially guarantees at least a trip to the finals:
+
+```{r echo =F}
+leb_teams = player_seas[player == "LeBron James", .(season, tm)][team_abr, on = c(tm = "abbreviation"), team := i.team]
+leb_teams[, team := gsub(".*\\s(.*)", "\\1", team)]
+leb_teams[team_rec, on = c(season = "short_season", team = "short_team"), Playoffs := i.Playoffs]
+leb_teams = leb_teams[between(season, 2010, 2019)]
+leb_teams[season == 2018, Playoffs := "Lost Finals"]
+leb_teams[season == 2019, Playoffs := "Missed Playoffs"]
+leb_teams[, Playoffs := gsub("Lost E. ", "", Playoffs)]
+
+leb_teams[, Playoffs := factor(Playoffs, levels = c("Missed Playoffs", "Conf. Semis", "Lost Finals", "Won Finals"), ordered=T)]
+leb_teams[, champ:= Playoffs == "Won Finals"]
+
+ggplot(leb_teams, aes(x = season, y = Playoffs, group = 1)) +
+  geom_line(linetype = "longdash", color = "grey") + 
+  geom_point(aes(shape = champ, size = champ, color = champ), fill = "grey") +
+  scale_x_continuous(breaks = 2010:2019, expand = expansion(add = 0.3)) +
+  scale_shape_manual(values = c("TRUE" = 8, "FALSE" = 21)) +
+  scale_size_manual(values = c("TRUE" = 6, "FALSE" = 3)) +
+  scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) +
+  labs(title = "LeBron's playoff record in the 2010s") +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_text(size = 12),
+        legend.position = "none",
+        panel.grid.minor = element_blank()) +
+  annotate("text", x = 2016, y = 1.5, label = "The CAVS come back from a\n 3-1 deficit to beat the Warriors") +
+   geom_curve(aes(x = 2016, xend = 2016, y = 1.8, yend = 3.8), size = 1, color = "grey", curvature = 0.2, arrow = arrow(length = unit(0.07, "inch")))
+
+```
+
+The 2010s brought about a tectonic shift in the way the game of basketball is played. Analytics became a buzzword and all the teams slowly but surely started hiring people that could advise them on optimising team efficiency. This revolution is still on-going and it really touches every aspect of the game:  
+
+* Coaching decisions
+* Diet and nutrition
+* Rest and recovery
+* Transfers
+* Drafting
+* **How the actual game is played**
+
+The last part is the one that we can have a look at through the data. One profound change that took place in the past decade was the shift towards three pointers. The logic was simple:  
+If a player is shooting 33% on 3s and 45% on long 2s, it is more efficient for the player to take a 3 than a 2. "Efficiency" in this context is measured by expected points, for the 3 we have 0.33\*3=0.99 points and for the 2 we have 0.45\*2=0.9 points on average. Therefore the 3 is preferable to the 2.  
+Naturally, the math is more complicated than this, one has to take into account spacing, offensive rebound and fast break possibilities etc. but you get the idea.
+
+
+```{r echo=F, message=F}
+threes = team_tot[between(season, 2010, 2019), .(season, team, x3pa)]
+
+my_pal = rcartocolor::carto_pal(n = 10, name = "Bold")
+
+ggplot(threes, aes(y = factor(season), x = x3pa, fill = factor(season))) +
+   ggridges::geom_density_ridges(
+    alpha = .7, size = 0.5
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_y_discrete(expand = c(.07, .07)) +
+  scale_x_continuous(expand = expansion(add = 0.2)) +
+  scale_color_manual(values = my_pal, guide = "none") +
+  scale_fill_manual(values = my_pal, guide = "none") +
+  labs(title = "Total three point attempts by year") +
+  theme(axis.text.x = element_text(face = "plain", size = 18),
+    axis.text.y = element_text(size = 22),
+    panel.grid.major.x = element_line(color = "grey90", size = .6),
+    panel.grid.major.y = element_blank(),
+    axis.title = element_blank(),
+    plot.title = element_text(hjust = 0.5))
+```
+
+The wider NBA audience starts becoming more familiar with analytics terms such as PER (this is how I measured Kobe's efficiency in the last plot of the 2000s), True shooting percentage, Value over replacement etc. I will make a separate notebook for these but let's have a look at how one of them, the True shooting percentage, evolved over time.    
+
+**True shooting percentage** converts all the points scored by a player (including three pointers, two pointers and free throws) into an equivalent 2-point percentage. Essentially, the figure is the answer to the question "How high a percentage would a player need to score in 2-pointers in order to achieve the same number of points in the same number of posessions?".  
+For a more thorough explanation, please have a look at [this wonderful video](https://www.youtube.com/watch?v=awL65UyXmA8&list=PLtzZl14BrKjTJZdubjNEY5jU0fGOiy51x&index=2&ab_channel=ThinkingBasketball).
+
+Let's have a look at how the True shooting percent changed as the years progressed. 
+
+```{r echo=F, fig.width=8}
+
+true_shooting = team_sum[between(season, 2000, 2019), .(season, team, ts_percent)]
+
+ggplot(true_shooting, aes(x = season, y = ts_percent, color = factor(season%/% 3) )) +
+  geom_jitter(width = 0.15, aes(group = season)) +
+  stat_smooth(method = "lm", se = F, formula = y ~ x, color = "grey20", size = 0.6) +
+  scale_y_continuous(label = label_percent(accuracy = 1)) + 
+  scale_x_continuous(expand = c(0.05, 0.5)) +
+  scale_color_brewer(type = "seq", palette = "Greens") +
+  labs(y = "True shooting", title = "True shooting is on the rise") +
+  theme(legend.position = "none",
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(face = "plain", size = 15),
+        plot.title = element_text(hjust = 0.5))
+
+
+
+```
+
+Teams started measuring and optimizing for such analytics figures and through them they understood scoring efficiency better. 
+
+## 2010: LeBron leaves Cleveland and joins the Miami Heat
+
+In the summer of 2010 the whole NBA was eagerly waiting for [the decision](https://www.youtube.com/watch?v=Afpgnb_9bA4&ab_channel=ESPN). **Which team would LeBron James be joining?**    
+The answer was the Miami Heat where he would join forces with Chris Bosh and Dwayne Wade to form a Big Three.  
+They [overpromised a bit](https://youtu.be/e9BqUBYaHlM?t=210) and got scolded by Dirk Nowitzki and the Mavericks in the first year, but they did bring two championships to Miami and made it to the finals in 4 consecutive years. Not bad!
+
+## 2015: The Warriors era begins 
+
+The Golden State Warriors up until that point had been a team that had not won the championship since 1975 and was not drawing headlines. But through some very good draft choices (and a little bit of luck!) they created a nucleus of really good players:  
+
+* Stephen Curry (7th pick of the 2009 NBA draft)  
+* Klay Thompson (11th pick of the 2011 NBA draft)  
+* Draymond Green (35th pick of the 2012 NBA draft)
+
+The piece that glued everything together was bringing on ex-Bulls player Steve Kerr to be the coach of the team. Bam!!🎆🎆    
+In the 2014-15 season they crushed the field with a regular season record 67-15 and Stephen Curry won the MVP. In the finals, they faced the Cleveland Cavaliers (being led by LeBron James, but missing 2/3 best players due to injuries) and clinched the title by 4-2. This was a major blow to Charles Barkley who was convinced that no-"jump shooting team" would ever win a championship.  
+To be fair to Chuck though, the Warriors were no mere "jump shooting team", they had the best shooter in the NBA and probably the second best as well. 
+
+```{r echo=F, warning=F, fig.height = 8}
+three_points_det = player_tot[between(season, 2010, 2019), .(season, player, x3p, x3pa, x3p_percent)]
+three_points_det[, curry_klay := ifelse(player == "Stephen Curry", "Steph",
+                                        ifelse(player == "Klay Thompson", "Klay", "other"))]
+three_points_det[, league_acc := sum(x3p)/sum(x3pa), by = season]
+three_points_det = three_points_det[x3pa > 3*82]
+three_points_det[, acc_category := ifelse(x3p_percent > 0.4, "Above 40% accuracy", "Below")]
+three_points_det[season == 2016 & curry_klay == "Steph", labels := "Steph" ]
+three_points_det[season == 2013 & curry_klay == "Klay", labels := "Klay" ]
+
+
+ggplot(three_points_det, aes(y = season, x= x3p, color = curry_klay, alpha = curry_klay, size = acc_category)) +
+  geom_jitter(height = 0.2, width = 0) +
+  geom_text_repel(aes(label = labels), direction = "x") +
+  scale_y_continuous(breaks = 2010:2019, expand=c(0.1, 0.01)) +
+  scale_x_continuous(expand = expansion(add = 10)) +
+  scale_color_manual(values= c(muted("blue"), muted("green"), "grey"), breaks = c("Klay", "Steph"), guide = "none") +
+  scale_alpha_manual(values= c("Steph" = 1, "Klay"=1, "other"=0.3), guide="none") +
+  scale_size_manual(values= c("Above 40% accuracy" = 5, "Below"=2)) +
+  labs(x = "Three pointers per season", title = "Steph and Klay are snipers") +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.x = element_line(color = "grey90", size = .6),
+        axis.title.y = element_blank(),
+        axis.title.x = element_text(size = 15),
+        axis.text.x = element_text(face = "plain", size = 18),
+        axis.text.y = element_text(size = 22)) +
+  guides(size = guide_legend(title.position="top", title.hjust = 0.5, nrow = 1))
+
+```
+
+Every since they got into rhythm (from the 2013 season) both Klay and Steph have been on top or almost on top of the league in terms of three points made with an above 40% accuracy. What more could you ask?  
+FYI the grey dot in 2019 is James Harden who had a monster year that season.
+
+## 2016: LeBron brings one to Cleveland
+
+In probably the biggest surprise in NBA finals, the Cleveland Cavaliers led by LeBron James, Kyrie Irving and Kevin Love come back from a 3-1 deficit to beat the 73-9 Warriors in Oakland. Cleveland got its first basketball title since the team was founded in 1970. Have a look at their playoff record up until that time:
+
+```{r echo=F}
+clev_playoff = team_rec[short_team == "Cavaliers" & short_season <= 2016, .(season = short_season, Playoffs)]
+
+clev_playoff[, Playoffs := gsub("Lost E. Conf. ", "", Playoffs)]
+clev_playoff[Playoffs=="", Playoffs := "Missed Playoffs"]
+clev_playoff[Playoffs=="Finals", Playoffs := "Conf. Finals"]
+
+clev_playoff[, Playoffs := factor(Playoffs, levels = c("Missed Playoffs", "1st Rnd.", "Semis", "Conf. Finals", "Lost Finals", "Won Finals"), ordered=T)]
+clev_playoff[, champ:= Playoffs == "Won Finals"]
+
+ggplot(clev_playoff, aes(x = season, y = Playoffs, group = 1)) +
+  geom_line(linetype = "longdash", color = "grey") + 
+  geom_point(aes(shape = champ, size = champ, color = champ), fill = "grey") +
+  #scale_x_continuous(breaks = 2010:2019, expand = expansion(add = 0.3)) +
+  scale_shape_manual(values = c("TRUE" = 8, "FALSE" = 21)) +
+  scale_size_manual(values = c("TRUE" = 6, "FALSE" = 3)) +
+  scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black")) +
+  labs(title = "Cleveland historically struggles") +
+  theme(axis.title = element_blank(),
+        axis.text.x = element_text(size = 15),
+        legend.position = "none",
+        panel.grid.minor = element_blank())
+
+
+```
+
+As you can see, it was not looking good for Cleveland!
+
+## 2016: If you can't beat them, join them!
+
+While the league is trying to grasp the amazing comeback by the Cavaliers in the finals, a seismic change takes place. Kevin Durant of the Thunder, one of the best players in the league, an elite shooter and league MVP, is a free agent and decides to join the Golden State Warriors. Just to get a better understanding of this, a team that finished the previous regular season with the best record in history (73-9) added in the off season one of the best players in the league to their already stacked roster. **Unbelievable!**
+
+I will not add any plots here, just a video summarizing what everyone thought at the time:
+
+<iframe width="80%" height = "600" src="https://www.youtube.com/embed/t1Jr4Qf_6oE" data-external= "1" allowfullscreen> </iframe>
+
+As predicted, the Warriors dominate the next two years and would have won 3 straight if it weren't for injuries to both Kevind Durant and Klay Thompson.
+
+# 2020s: The decade of Giannis? 🦌
+
+<figure> 
+     <img src='https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1632&q=80'>
+     <figcaption> Visualisation of the coronavirus by <a>https://unsplash.com/@fusion_medical_animation</a></figcaption>
+</figure>
+</br>
+
+The 2020s have not started great for neither the NBA nor the world as a whole. In case you missed it, we are in the midst of a global pandemic which has turned the lives of many people upside down. 
+
+NBA-wise, LeBron James managed to win another title with the Lakers this time after defeating the Miami Heat in a bubble environment in Orlando. 
+
+**But probably the most amazing NBA moment of the decade so far was the Cinderella story of a kid from Greece who was literally starving growing up, but made it all the way to the NBA and managed through hard work and dedication to win a championship.** 
+This is not an imaginary scenario, this is what actually happened in the NBA in 2021:  
+[Giannis Antetokounmpo](https://www.youtube.com/watch?v=HrCU305tzmM&ab_channel=NBAonTNT) led the Milwaukee Bucks to their first championship since 1971! 
+
+<span style="color:green;font-size:30;font-weight:bold">I hope he gets many more! </span>
+
+---
+
+**That wraps up this notebook, I hope you enjoyed it, please let me know your thoughts!**  
+<span style="color:purple"> If you liked this notebook and/or it helped you, remember to leave an upvote! </span>
+
+
+
